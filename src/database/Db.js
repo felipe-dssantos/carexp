@@ -4,7 +4,7 @@ import * as SQLite from 'expo-sqlite';
 const db = SQLite.openDatabase('carxp.db');
 
 // Função para criar as tabelas no banco de dados
-const createTables = () => {
+export const createTables = () => {
   db.transaction(tx => {
     // Tabela 'car'
     tx.executeSql(
@@ -56,12 +56,10 @@ const createTables = () => {
   });
 };
 
-// Chamada da função para criar as tabelas
-createTables();
 
 
 // Função para cadastrar um carro na tabela 'car'
-const insertCar = (model, plate, year) => {
+export const insertCar = (model, plate, year) => {
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO car (model, plate, year) VALUES (?, ?, ?)',
@@ -80,7 +78,7 @@ const insertCar = (model, plate, year) => {
   insertCar('Toyota Corolla', 'ABC123', 2022);
   
   // Função para cadastrar uma categoria na tabela 'category'
-  const insertCategory = (description, type) => {
+ export const insertCategory = (description, type) => {
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO category (description, type) VALUES (?, ?)',
@@ -99,7 +97,7 @@ const insertCar = (model, plate, year) => {
   insertCategory('Combustível', 0); // Supondo que '0' representa despesa
   
   // Função para cadastrar uma despesa na tabela 'expense'
-  const insertExpense = (description, date, categoryId, carId) => {
+ export const insertExpense = (description, date, categoryId, carId) => {
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO expense (description, date, category_id, car_id) VALUES (?, ?, ?, ?)',
@@ -115,10 +113,10 @@ const insertCar = (model, plate, year) => {
   };
   
   // Exemplo de inserção de uma despesa
-  insertExpense('Troca de óleo', '2024-04-28', 1, 1); // Supondo que '1' é o ID da categoria e do carro correspondentes
+ // insertExpense('Troca de óleo', '2024-04-28', 1, 1); // Supondo que '1' é o ID da categoria e do carro correspondentes
   
   // Função para cadastrar uma receita na tabela 'earning'
-  const insertEarning = (description, date, categoryId, carId) => {
+ export const insertEarning = (description, date, categoryId, carId) => {
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO earning (description, date, category_id, car_id) VALUES (?, ?, ?, ?)',
@@ -134,5 +132,5 @@ const insertCar = (model, plate, year) => {
   };
   
   // Exemplo de inserção de uma receita
-  insertEarning('Venda de peças', '2024-04-27', 2, 1); // Supondo que '2' é o ID da categoria e '1' é o ID do carro correspondentes
+ // insertEarning('Venda de peças', '2024-04-27', 2, 1); // Supondo que '2' é o ID da categoria e '1' é o ID do carro correspondentes
   
