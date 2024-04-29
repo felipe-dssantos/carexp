@@ -32,7 +32,7 @@ export const createTables = () => {
 
     // Tabela 'expense'
     tx.executeSql(
-      'CREATE TABLE IF NOT EXISTS expense (id INTEGER PRIMARY KEY NOT NULL, description TEXT NOT NULL, date TEXT NOT NULL, category_id INTEGER, car_id INTEGER, FOREIGN KEY(category_id) REFERENCES category(id), FOREIGN KEY(car_id) REFERENCES car(id))',
+      'CREATE TABLE IF NOT EXISTS expense (id INTEGER PRIMARY KEY NOT NULL, description TEXT NOT NULL, date TEXT NOT NULL, amount REAL NOT NULL, category_id INTEGER NOT NULL, car_id INTEGER NOT NULL, FOREIGN KEY(category_id) REFERENCES category(id), FOREIGN KEY(car_id) REFERENCES car(id))',
       [],
       (tx, result) => {
         console.log('Tabela "expense" criada com sucesso');
@@ -44,7 +44,7 @@ export const createTables = () => {
 
     // Tabela 'earning'
     tx.executeSql(
-      'CREATE TABLE IF NOT EXISTS earning (id INTEGER PRIMARY KEY NOT NULL, description TEXT NOT NULL, date TEXT NOT NULL, category_id INTEGER, car_id INTEGER, FOREIGN KEY(category_id) REFERENCES category(id), FOREIGN KEY(car_id) REFERENCES car(id))',
+      'CREATE TABLE IF NOT EXISTS earning (id INTEGER PRIMARY KEY NOT NULL, description TEXT NOT NULL, date TEXT NOT NULL, amount REAL NOT NULL, category_id INTEGER NOT NULL, car_id INTEGER NOT NULL, FOREIGN KEY(category_id) REFERENCES category(id), FOREIGN KEY(car_id) REFERENCES car(id))',
       [],
       (tx, result) => {
         console.log('Tabela "earning" criada com sucesso');
@@ -54,155 +54,192 @@ export const createTables = () => {
       }
     );
   });
+
+  // Inserir carros padrão se ainda não existirem
+  insertDefaultCars();
+
+  // Inserir categorias padrão se ainda não existirem
+  insertDefaultCategories();
 };
-
-
 
 // Função para cadastrar um carro na tabela 'car'
 export const insertCar = (model, plate, year) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        'INSERT INTO car (model, plate, year) VALUES (?, ?, ?)',
-        [model, plate, year],
-        (tx, result) => {
-          console.log('Carro cadastrado com sucesso');
-        },
-        (tx, error) => {
-          console.error('Erro ao cadastrar carro: ', error);
-        }
-      );
-    });
-  };
-  
-  // Exemplo de inserção de um carro
- // insertCar('Toyota Corolla', 'ABC123', 2022);
-  
-  // Função para cadastrar uma categoria na tabela 'category'
- export const insertCategory = (description, type) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        'INSERT INTO category (description, type) VALUES (?, ?)',
-        [description, type],
-        (tx, result) => {
-          console.log('Categoria cadastrada com sucesso');
-        },
-        (tx, error) => {
-          console.error('Erro ao cadastrar categoria: ', error);
-        }
-      );
-    });
-  };
-  
-  // Exemplo de inserção de uma categoria
- // insertCategory('Combustível', 0); // Supondo que '0' representa despesa
-  
-  // Função para cadastrar uma despesa na tabela 'expense'
- export const insertExpense = (description, date, categoryId, carId) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        'INSERT INTO expense (description, date, category_id, car_id) VALUES (?, ?, ?, ?)',
-        [description, date, categoryId, carId],
-        (tx, result) => {
-          console.log('Despesa cadastrada com sucesso');
-        },
-        (tx, error) => {
-          console.error('Erro ao cadastrar despesa: ', error);
-        }
-      );
-    });
-  };
-  
-  // Exemplo de inserção de uma despesa
- // insertExpense('Troca de óleo', '2024-04-28', 1, 1); // Supondo que '1' é o ID da categoria e do carro correspondentes
-  
-  // Função para cadastrar uma receita na tabela 'earning'
- export const insertEarning = (description, date, categoryId, carId) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        'INSERT INTO earning (description, date, category_id, car_id) VALUES (?, ?, ?, ?)',
-        [description, date, categoryId, carId],
-        (tx, result) => {
-          console.log('Receita cadastrada com sucesso');
-        },
-        (tx, error) => {
-          console.error('Erro ao cadastrar receita: ', error);
-        }
-      );
-    });
-  };
-  
-  // Exemplo de inserção de uma receita
- // insertEarning('Venda de peças', '2024-04-27', 2, 1); // Supondo que '2' é o ID da categoria e '1' é o ID do carro correspondentes
-
- 
- // Função para recuperar todas as categorias do banco de dados
- export const getCategories = () => {
-   return new Promise((resolve, reject) => {
-     db.transaction(tx => {
-       tx.executeSql(
-         'SELECT * FROM category',
-         [],
-         (_, { rows }) => {
-           const categories = rows._array;
-           resolve(categories);
-         },
-         (_, error) => {
-           console.error('Erro ao recuperar as categorias do banco de dados:', error);
-           reject(error);
-         }
-       );
-     });
-   });
- };
- 
- // Função para recuperar todos os carros do banco de dados
- export const getCars = () => {
-   return new Promise((resolve, reject) => {
-     db.transaction(tx => {
-       tx.executeSql(
-         'SELECT * FROM car',
-         [],
-         (_, { rows }) => {
-           const cars = rows._array;
-           resolve(cars);
-         },
-         (_, error) => {
-           console.error('Erro ao recuperar os carros do banco de dados:', error);
-           reject(error);
-         }
-       );
-     });
-   });
- };
- 
- // Função para inserir carros padrão no banco de dados
-export const insertDefaultCars = () => {
   db.transaction(tx => {
     tx.executeSql(
-      'INSERT INTO car (model) VALUES (?)',
-      ['gol'],
-      (_, { insertId }) => {
-        console.log(`Carro padrão inserido com ID: ${insertId}`);
+      'INSERT INTO car (model, plate, year) VALUES (?, ?, ?)',
+      [model, plate, year],
+      (tx, result) => {
+        console.log('Carro cadastrado com sucesso');
       },
-      (_, error) => {
-        console.error('Erro ao inserir carro padrão:', error);
+      (tx, error) => {
+        console.error('Erro ao cadastrar carro: ', error);
       }
     );
   });
 };
 
-// Função para inserir categorias padrão no banco de dados
-export const insertDefaultCategories = () => {
+// Função para cadastrar uma categoria na tabela 'category'
+export const insertCategory = (description, type) => {
   db.transaction(tx => {
     tx.executeSql(
       'INSERT INTO category (description, type) VALUES (?, ?)',
-      ['combustivel', 1], // 1 para despesa
-      (_, { insertId }) => {
-        console.log(`Categoria padrão de despesa inserida com ID: ${insertId}`);
+      [description, type],
+      (tx, result) => {
+        console.log('Categoria cadastrada com sucesso');
       },
-      (_, error) => {
-        console.error('Erro ao inserir categoria padrão de despesa:', error);
+      (tx, error) => {
+        console.error('Erro ao cadastrar categoria: ', error);
       }
     );
+  });
+};
+
+// Função para cadastrar uma despesa na tabela 'expense'
+export const insertExpense = (description, date, amount, categoryId, carId) => {
+  db.transaction(tx => {
+    tx.executeSql(
+      'INSERT INTO expense (description, date, amount, category_id, car_id) VALUES (?, ?, ?, ?, ?)',
+      [description, date, amount, categoryId, carId],
+      (tx, result) => {
+        console.log('Despesa cadastrada com sucesso');
+      },
+      (tx, error) => {
+        console.error('Erro ao cadastrar despesa: ', error);
+      }
+    );
+  });
+};
+
+// Função para cadastrar uma receita na tabela 'earning'
+export const insertEarning = (description, date, amount, categoryId, carId) => {
+  db.transaction(tx => {
+    tx.executeSql(
+      'INSERT INTO earning (description, date, amount, category_id, car_id) VALUES (?, ?, ?, ?, ?)',
+      [description, date, amount, categoryId, carId],
+      (tx, result) => {
+        console.log('Receita cadastrada com sucesso');
+      },
+      (tx, error) => {
+        console.error('Erro ao cadastrar receita: ', error);
+      }
+    );
+  });
+};
+
+// Função para recuperar todas as categorias do banco de dados
+export const getCategories = () => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM category',
+        [],
+        (_, { rows }) => {
+          const categories = rows._array;
+          resolve(categories);
+        },
+        (_, error) => {
+          console.error('Erro ao recuperar as categorias do banco de dados:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
+// Função para recuperar todos os carros do banco de dados
+export const getCars = () => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM car',
+        [],
+        (_, { rows }) => {
+          const cars = rows._array;
+          resolve(cars);
+        },
+        (_, error) => {
+          console.error('Erro ao recuperar os carros do banco de dados:', error);
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
+// Função para inserir carros padrão no banco de dados
+export const insertDefaultCars = () => {
+  getCars().then(cars => {
+    if (cars.length === 0) {
+      db.transaction(tx => {
+        tx.executeSql(
+          'INSERT INTO car (model) VALUES (?)',
+          ['gol'],
+          (_, { insertId }) => {
+            console.log(`Carro padrão inserido com ID: ${insertId}`);
+          },
+          (_, error) => {
+            console.error('Erro ao inserir carro padrão:', error);
+          }
+        );
+      });
+    }
+  });
+};
+
+// Função para inserir categorias padrão no banco de dados
+export const insertDefaultCategories = () => {
+  getCategories().then(categories => {
+    if (categories.length === 0) {
+      db.transaction(tx => {
+        tx.executeSql(
+          'INSERT INTO category (description, type) VALUES (?, ?)',
+          ['combustivel', 1], // 1 para despesa
+          (_, { insertId }) => {
+            console.log(`Categoria padrão de despesa inserida com ID: ${insertId}`);
+          },
+          (_, error) => {
+            console.error('Erro ao inserir categoria padrão de despesa:', error);
+          }
+        );
+      });
+    }
+  });
+};
+
+// Função para recuperar todas as despesas do banco de dados
+export const getExpenses = () => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM expense',
+        [],
+        (_, { rows }) => {
+          const expenses = rows._array;
+          resolve(expenses);
+        },
+        (_, error) => {
+          reject(error);
+        }
+      );
+    });
+  });
+};
+
+// Função para recuperar todos os ganhos do banco de dados
+export const getEarnings = () => {
+  return new Promise((resolve, reject) => {
+    db.transaction(tx => {
+      tx.executeSql(
+        'SELECT * FROM earning',
+        [],
+        (_, { rows }) => {
+          const earnings = rows._array;
+          resolve(earnings);
+        },
+        (_, error) => {
+          reject(error);
+        }
+      );
+    });
   });
 };

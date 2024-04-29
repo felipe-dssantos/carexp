@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, TextInput } from 'react-native'; // Importe o TextInput
-import { Picker } from '@react-native-picker/picker';
+import { View, Text, Button, StyleSheet, TextInput, Modal, TouchableOpacity } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { insertExpense } from '../src/database/Db';
 import { getCategories, getCars } from '../src/database/Db';
@@ -11,53 +10,107 @@ export default function InsertExpenseScreen() {
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedCar, setSelectedCar] = useState('');
+  const [value, setValue] = useState('');
   const [categories, setCategories] = useState([]);
   const [cars, setCars] = useState([]);
-  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
-  const [carsLoaded, setCarsLoaded] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
+  const [showCarModal, setShowCarModal] = useState(false);
 
   useEffect(() => {
-    if (!categoriesLoaded) {
-      // Recupera as categorias do banco de dados
-      getCategories().then(categories => {
-        setCategories(categories);
-        if (categories.length > 0) {
-          setSelectedCategory(categories[0].id); // Seleciona a primeira categoria por padrão
-        }
-        setCategoriesLoaded(true);
-      });
-    }
+    // Recupera as categorias do banco de dados
+    getCategories().then(categories => {
+      setCategories(categories);
+      if (categories.length > 0) {
+        setSelectedCategory(categories[0].id); // Seleciona a primeira categoria por padrão
+      }
+    });
 
-    if (!carsLoaded) {
-      // Recupera os carros do banco de dados
-      getCars().then(cars => {
-        setCars(cars);
-        if (cars.length > 0) {
-          setSelectedCar(cars[0].id); // Seleciona o primeiro carro por padrão
-        }
-        setCarsLoaded(true);
-      });
-    }
-  }, [categoriesLoaded, carsLoaded]);
+    // Recupera os carros do banco de dados
+    getCars().then(cars => {
+      setCars(cars);
+      if (cars.length > 0) {
+        setSelectedCar(cars[0].id); // Seleciona o primeiro carro por padrão
+      }
+    });
+  }, []);
 
   const handleInsertExpense = () => {
     // Verifica se todos os campos foram preenchidos
-    if (!description || !selectedCategory || !selectedCar) {
+    if (!description || !selectedCategory || !selectedCar || !value) {
       alert('Por favor, preencha todos os campos.');
       return;
     }
 
     // Insere o gasto no banco de dados
-    insertExpense(description, date.toISOString(), selectedCategory, selectedCar);
+    insertExpense(description, date.toISOString(), selectedCategory, selectedCar, parseFloat(value));
 
     // Limpa os campos após a inserção
     setDescription('');
     setDate(new Date());
     setSelectedCategory('');
     setSelectedCar('');
+    setValue('');
 
     // Exibe uma mensagem de sucesso
     alert('Gasto inserido com sucesso!');
+  };
+
+  const renderCategoryModal = () => {
+    return (
+      <Modal
+        visible={showCategoryModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCategoryModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecione a Categoria</Text>
+            {categories.map(category => (
+              <TouchableOpacity
+                key={category.id}
+                style={styles.modalItem}
+                onPress={() => {
+                  setSelectedCategory(category.id);
+                  setShowCategoryModal(false);
+                }}
+              >
+                <Text>{category.description}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
+  const renderCarModal = () => {
+    return (
+      <Modal
+        visible={showCarModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowCarModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecione o Carro</Text>
+            {cars.map(car => (
+              <TouchableOpacity
+                key={car.id}
+                style={styles.modalItem}
+                onPress={() => {
+                  setSelectedCar(car.id);
+                  setShowCarModal(false);
+                }}
+              >
+                <Text>{car.model}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+    );
   };
 
   return (
@@ -84,27 +137,23 @@ export default function InsertExpenseScreen() {
           }}
         />
       )}
+      <Text style={styles.label}>Valor:</Text>
+      <TextInput
+        style={styles.input}
+        placeholder="Valor"
+        keyboardType="numeric"
+        value={value}
+        onChangeText={text => setValue(text)}
+      />
       <Text style={styles.label}>Categoria:</Text>
-      <Picker
-        style={styles.picker}
-        selectedValue={selectedCategory}
-        onValueChange={(itemValue, itemIndex) => setSelectedCategory(itemValue)}
-      >
-        {categories.map(category => (
-          <Picker.Item key={category.id} label={category.description} value={category.id} />
-        ))}
-      </Picker>
+      <Button title="Selecionar Categoria" onPress={() => setShowCategoryModal(true)} />
+      <Text>{selectedCategory ? categories.find(cat => cat.id === selectedCategory)?.description : ''}</Text>
       <Text style={styles.label}>Carro:</Text>
-      <Picker
-        style={styles.picker}
-        selectedValue={selectedCar}
-        onValueChange={(itemValue, itemIndex) => setSelectedCar(itemValue)}
-      >
-        {cars.map(car => (
-          <Picker.Item key={car.id} label={car.model} value={car.id} />
-        ))}
-      </Picker>
+      <Button title="Selecionar Carro" onPress={() => setShowCarModal(true)} />
+      <Text>{selectedCar ? cars.find(car => car.id === selectedCar)?.model : ''}</Text>
       <Button title="Inserir Gasto" onPress={handleInsertExpense} />
+      {renderCategoryModal()}
+      {renderCarModal()}
     </View>
   );
 }
@@ -132,11 +181,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 5,
   },
-  picker: {
-    width: '80%',
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
-  datePicker: {
-    width: '80%',
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
     marginBottom: 10,
+  },
+  modalItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
   },
 });
