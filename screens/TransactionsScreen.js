@@ -54,15 +54,18 @@ export default function TransactionsScreen() {
   const renderTransaction = ({ item }) => {
     return (
       <View style={styles.transaction}>
+        <Text>{item.car_id}</Text>
+        <Text>{item.car_model}</Text>
         <Text>{new Date(item.date).toLocaleDateString()}</Text>
         <Text>{item.description}</Text>
         {/* Aqui você pode substituir o ID do carro e da categoria pela descrição */}
-        <Text>{item.category_id}</Text>
+        <Text>{item.category_description}</Text>
         <Text>{item.amount}</Text>
-        <Text>{item.car_id}</Text>
+        
       </View>
     );
   };
+  
 
   return (
     <View style={styles.container}>

@@ -111,7 +111,7 @@ export const insertDefaultCars = async () => {
 export const insertDefaultCategories = async () => {
   const categories = await getCategories();
   if (categories.length === 0) {
-    await insertCategory('combustivel', 1);
+    await insertCategory('Combustivel', 1);
   }
 };
 
@@ -129,7 +129,24 @@ export const getEarnings = async () => {
 
 
 export const getAllTransactions = async () => {
-  const allExpenses = await getExpenses();
-  const allEarnings = await getEarnings();
-  return [...allExpenses, ...allEarnings];
+  // Consulta SQL para obter todas as transações com a descrição da categoria e do modelo do carro
+  const query = `
+    SELECT 
+      t.*, 
+      c.description AS category_description,
+      car.model AS car_model 
+    FROM 
+      (
+        SELECT id, description, date, amount, category_id, car_id FROM expense
+        UNION ALL
+        SELECT id, description, date, amount, category_id, car_id FROM earning
+      ) AS t
+    LEFT JOIN category AS c ON t.category_id = c.id
+    LEFT JOIN car ON t.car_id = car.id
+  `;
+  
+  const result = await executeQuery(query);
+  console.log("Resultados da consulta:", result.rows._array); // Adicione esta linha
+  return result.rows._array;
 };
+
