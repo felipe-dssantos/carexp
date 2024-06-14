@@ -191,13 +191,6 @@ const ReportsScreen = () => {
               }}
             />
             <Button
-              title="Current Month"
-              onPress={() => {
-                setFilter('currentMonth');
-                setModalVisible(false);
-              }}
-            />
-            <Button
               title="Last 3 Months"
               onPress={() => {
                 setFilter('last3Months');
