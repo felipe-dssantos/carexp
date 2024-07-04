@@ -29,9 +29,24 @@ const App = () => {
         })}
       
       >
-        <Tab.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'Add Expense' }} />
-        <Tab.Screen name="Reports" component={ReportsScreen} options={{ title: 'Reports' }} />
-        <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'History' }} />
+        <Tab.Screen name="AddExpense" component={AddExpenseScreen} options={{ title: 'Add Expense ',
+        headerTintColor: '#fff',
+          headerStyle: {
+            backgroundColor : '#00A86B'
+          }
+         }} />
+         <Tab.Screen name="History" component={HistoryScreen} options={{ title: 'History',
+          headerTintColor: '#fff',
+          headerStyle: {
+            backgroundColor : '#00A86B'
+          } }} />
+        <Tab.Screen name="Reports" component={ReportsScreen} options={{ title: 'Reports',
+          headerTintColor: '#fff',
+          headerStyle: {
+            backgroundColor : '#00A86B'
+          },
+         }} />
+        
       </Tab.Navigator>
     </NavigationContainer>
   );

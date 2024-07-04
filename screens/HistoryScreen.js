@@ -1,111 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, FlatList, Modal, Button, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { StyleSheet, Text, View, FlatList, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialIcons } from '@expo/vector-icons';
 
-const categories = ['Manutenção', 'Combustível', 'Multas', 'Impostos'];
-
 const HistoryScreen = () => {
   const [expenses, setExpenses] = useState([]);
-  const [filteredExpenses, setFilteredExpenses] = useState([]);
-  const [filter, setFilter] = useState('all');
-  const [modalVisible, setModalVisible] = useState(false);
+  const [monthlyTotals, setMonthlyTotals] = useState({});
 
-  useEffect(() => {
-    loadExpenses();
-  }, []);
-
-  useEffect(() => {
-    filterExpenses();
-  }, [filter, expenses]);
-
-  const loadExpenses = async () => {
+  const loadExpenses = useCallback(async () => {
     try {
       const storedExpenses = await AsyncStorage.getItem('@expenses');
       if (storedExpenses !== null) {
-        setExpenses(JSON.parse(storedExpenses));
+        const parsedExpenses = JSON.parse(storedExpenses);
+        setExpenses(parsedExpenses.sort((a, b) => new Date(b.date) - new Date(a.date)));
+        calculateMonthlyTotals(parsedExpenses);
       }
     } catch (error) {
       console.error('Error loading expenses:', error);
     }
+  }, []);
+
+  useEffect(() => {
+    loadExpenses();
+  }, [loadExpenses]);
+
+  const calculateMonthlyTotals = (expenses) => {
+    const totals = expenses.reduce((acc, expense) => {
+      const date = new Date(expense.date);
+      const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+      if (!acc[monthYear]) {
+        acc[monthYear] = 0;
+      }
+      acc[monthYear] += parseFloat(expense.amount);
+      return acc;
+    }, {});
+    setMonthlyTotals(totals);
   };
 
-  const filterExpenses = () => {
-    let filtered = [...expenses];
-    switch (filter) {
-      case 'lastMonth':
-        filtered = filtered.filter(expense => {
-          const expenseDate = new Date(expense.date);
-          const lastMonth = new Date();
-          lastMonth.setMonth(lastMonth.getMonth() - 1);
-          return expenseDate >= lastMonth;
-        });
-        break;
-      case 'last3Months':
-        filtered = filtered.filter(expense => {
-          const expenseDate = new Date(expense.date);
-          const last3Months = new Date();
-          last3Months.setMonth(last3Months.getMonth() - 3);
-          return expenseDate >= last3Months;
-        });
-        break;
-      case 'last6Months':
-        filtered = filtered.filter(expense => {
-          const expenseDate = new Date(expense.date);
-          const last6Months = new Date();
-          last6Months.setMonth(last6Months.getMonth() - 6);
-          return expenseDate >= last6Months;
-        });
-        break;
-      case 'lastYear':
-        filtered = filtered.filter(expense => {
-          const expenseDate = new Date(expense.date);
-          const lastYear = new Date();
-          lastYear.setFullYear(lastYear.getFullYear() - 1);
-          return expenseDate >= lastYear;
-        });
-        break;
-      case 'all':
-        // No filtering needed
-        break;
-      default:
-        // Custom filter
-        // Implement your custom filtering logic here if needed
-        break;
+  const formatDate = (date) => {
+    const d = new Date(date);
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    const year = d.getFullYear();
+    return `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month}/${year}`;
+  };
+
+  const deleteExpense = async (id) => {
+    try {
+      const updatedExpenses = expenses.filter(expense => expense.id !== id);
+      await AsyncStorage.setItem('@expenses', JSON.stringify(updatedExpenses));
+      setExpenses(updatedExpenses);
+      calculateMonthlyTotals(updatedExpenses);
+    } catch (error) {
+      console.error('Error deleting expense:', error);
     }
-    setFilteredExpenses(filtered);
   };
-
-  const renderFilterModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={true}
-      visible={modalVisible}
-      onRequestClose={() => setModalVisible(false)}>
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
-          <Button title="All" onPress={() => setFilterAndCloseModal('all')} />
-          <Button title="Last Year" onPress={() => setFilterAndCloseModal('lastYear')} />
-          <Button title="Last 6 Months" onPress={() => setFilterAndCloseModal('last6Months')} />
-          <Button title="Last 3 Months" onPress={() => setFilterAndCloseModal('last3Months')} />
-          <Button title="Last Month" onPress={() => setFilterAndCloseModal('lastMonth')} />
-        </View>
-      </View>
-    </Modal>
-  );
-
-  const setFilterAndCloseModal = (selectedFilter) => {
-    setFilter(selectedFilter);
-    setModalVisible(false);
-  };
-
-  const renderFilterButton = () => (
-    <TouchableOpacity
-      style={styles.filterButton}
-      onPress={() => setModalVisible(true)}>
-      <Text style={styles.buttonText}>Filter: {filter}</Text>
-    </TouchableOpacity>
-  );
 
   const renderExpenseItem = ({ item }) => (
     <View style={styles.expenseItem}>
@@ -132,43 +81,58 @@ const HistoryScreen = () => {
     </View>
   );
 
-  const deleteExpense = async (id) => {
-    try {
-      const updatedExpenses = expenses.filter(expense => expense.id !== id);
-      await AsyncStorage.setItem('@expenses', JSON.stringify(updatedExpenses));
-      setExpenses(updatedExpenses);
-    } catch (error) {
-      console.error('Error deleting expense:', error);
+  const renderSeparator = (prevItem, currItem) => {
+    const prevDate = new Date(prevItem.date);
+    const currDate = new Date(currItem.date);
+
+    if (prevDate.getMonth() !== currDate.getMonth() || prevDate.getFullYear() !== currDate.getFullYear()) {
+      const monthYear = `${currDate.getMonth() + 1}/${currDate.getFullYear()}`;
+      const total = monthlyTotals[monthYear] || 0;
+      return (
+        <View style={styles.separator}>
+          <Text style={styles.separatorText}>
+            {monthYear} - Total: ${total.toFixed(2)}
+          </Text>
+        </View>
+      );
     }
+    return null;
   };
 
-  const formatDate = (date) => {
-    const d = new Date(date);
-    const day = d.getDate();
-    const month = d.getMonth() + 1;
-    const year = d.getFullYear();
-    return `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month}/${year}`;
-  };
+  const renderExpenses = () => {
+    const expensesWithSeparators = [];
 
-  const calculateTotal = () => {
-    let total = 0;
-    filteredExpenses.forEach(expense => {
-      total += parseFloat(expense.amount);
+    expenses.forEach((expense, index) => {
+      if (index === 0 || renderSeparator(expenses[index - 1], expense)) {
+        expensesWithSeparators.push({
+          isSeparator: true,
+          date: expense.date,
+        });
+      }
+      expensesWithSeparators.push(expense);
     });
-    return total.toFixed(2);
+
+    return expensesWithSeparators;
   };
 
   return (
     <View style={styles.container}>
-      {renderFilterButton()}
-      {renderFilterModal()}
+      <TouchableOpacity style={styles.refreshButton} onPress={loadExpenses}>
+        <MaterialIcons name="refresh" size={24} color="white" />
+        <Text style={styles.buttonText}>Refresh</Text>
+      </TouchableOpacity>
       <FlatList
-        data={filteredExpenses}
-        renderItem={renderExpenseItem}
-        keyExtractor={item => item.id}
+        data={renderExpenses()}
+        renderItem={({ item }) => item.isSeparator ? (
+          <View style={styles.separator}>
+            <Text style={styles.separatorText}>
+              {`${new Date(item.date).getMonth() + 1}/${new Date(item.date).getFullYear()}`}   $ - {monthlyTotals[`${new Date(item.date).getMonth() + 1}/${new Date(item.date).getFullYear()}`]?.toFixed(2) || '0.00'}
+            </Text>
+          </View>
+        ) : renderExpenseItem({ item })}
+        keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
         style={styles.historyList}
       />
-      <Text style={styles.totalText}>Total: ${calculateTotal()}</Text>
     </View>
   );
 };
@@ -176,22 +140,22 @@ const HistoryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F0FFFF', // Cor verde água
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#D3D3D3',
     padding: 20,
   },
-  filterButton: {
-    backgroundColor: '#00CED1', // Cor verde água
+  refreshButton: {
+    backgroundColor: '#00A86B',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
     justifyContent: 'center',
+    flexDirection: 'row',
     marginBottom: 10,
   },
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+    marginLeft: 5,
   },
   expenseItem: {
     borderWidth: 1,
@@ -199,7 +163,7 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     padding: 10,
     marginBottom: 10,
-    width: '100%',
+    backgroundColor: '#FFFF',
   },
   item: {
     flexDirection: 'row',
@@ -208,9 +172,23 @@ const styles = StyleSheet.create({
   },
   itemIcon: {
     marginRight: 10,
+   
   },
   itemText: {
     fontSize: 16,
+  },
+  historyList: {
+    width: '100%',
+  },
+  separator: {
+    padding: 10,
+    backgroundColor: '#00A86B',
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  separatorText: {
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   deleteButton: {
     flexDirection: 'row',
@@ -218,28 +196,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   deleteButtonText: {
-    color: 'black',
+    color: 'red',
     marginLeft: 5,
-  },
-  historyList: {
-    width: '100%',
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 10,
-    elevation: 5,
-  },
-  totalText: {
-    fontSize: 20,
     fontWeight: 'bold',
-    marginTop: 10,
   },
 });
 

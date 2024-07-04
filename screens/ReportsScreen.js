@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PieChart } from 'react-native-chart-kit';
 import { MaterialIcons } from '@expo/vector-icons';
 
-const categories = ['Manutenção', 'Combustível', 'Multas', 'Impostos'];
+const categories = ['Maintenance', 'Fuel', 'Traffic fine', 'Taxes'];
 
 const ReportsScreen = () => {
   const [expenses, setExpenses] = useState([]);
@@ -98,7 +98,7 @@ const ReportsScreen = () => {
 
     filteredExpenses.forEach(expense => {
       totalMonth += parseFloat(expense.amount);
-      if (expense.category === 'Combustível') {
+      if (expense.category === 'Fuel') {
         totalFuel += parseFloat(expense.amount);
       } else {
         totalOther += parseFloat(expense.amount);
@@ -129,12 +129,12 @@ const ReportsScreen = () => {
     return (
       <View style={styles.reportContainer}>
         <Text style={styles.reportTitle}>Monthly Expenses Report</Text>
-        <Text>Total Expenses: ${totalMonth.toFixed(2)}</Text>
-        <Text>Total Fuel Expenses: ${totalFuel.toFixed(2)}</Text>
-        <Text>Total Other Expenses: ${totalOther.toFixed(2)}</Text>
+        <Text style={styles.textreports}>Expenses: ${totalMonth.toFixed(2)}</Text>
+        <Text style={styles.textreports}>Fuel Expenses: ${totalFuel.toFixed(2)}</Text>
+        <Text style={styles.textreports}>Other Expenses: ${totalOther.toFixed(2)}</Text>
         <PieChart
           data={chartData}
-          width={300}
+          width={350}
           height={200}
           chartConfig={{
             backgroundGradientFrom: '#1E2923',
@@ -143,7 +143,7 @@ const ReportsScreen = () => {
           }}
           accessor="amount"
           backgroundColor="transparent"
-          paddingLeft="15"
+          paddingLeft="2"
           absolute
         />
       </View>
@@ -152,13 +152,13 @@ const ReportsScreen = () => {
 
   const getCategoryColor = (category) => {
     switch (category) {
-      case 'Combustível':
+      case 'Fuel':
         return '#FF6347'; // Vermelho
-      case 'Manutenção':
+      case 'Maintenance':
         return '#FFD700'; // Amarelo
-      case 'Multas':
+      case 'Traffic fine':
         return '#87CEEB'; // Azul claro
-      case 'Impostos':
+      case 'Taxes':
         return '#808080'; // Cinza
       default:
         return '#000000'; // Preto
@@ -231,9 +231,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
+    backgroundColor : '#D3D3D3'
   },
   filterButton: {
-    backgroundColor: '#00CED1',
+    backgroundColor: '#00A86B',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
@@ -265,6 +266,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
   },
+  textreports: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  }
 });
 
 export default ReportsScreen;
