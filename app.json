@@ -24,7 +24,7 @@
         "backgroundColor": "#ffffff"
       },
       "config": {
-        "googleMobileAdsAppId": "ca-app-pub-9103772664029149~6394317997"
+        "googleMobileAdsAppId": 
       },
       "permissions": [
         "CAMERA",
@@ -36,9 +36,6 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    },
-    "react-native-google-mobile-ads": {
-      "android_app_id": "ca-app-pub-9103772664029149~6394317997"
     }
 
   }
